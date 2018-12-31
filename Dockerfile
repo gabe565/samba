@@ -2,59 +2,66 @@ FROM alpine
 MAINTAINER David Personette <dperson@gmail.com>
 
 # Install samba
-RUN apk --no-cache --no-progress upgrade && \
-    apk --no-cache --no-progress add bash samba shadow tini && \
-    adduser -D -G users -H -S -g 'Samba User' -h /tmp smbuser && \
-    file="/etc/samba/smb.conf" && \
-    sed -i 's|^;* *\(log file = \).*|   \1/dev/stdout|' $file && \
-    sed -i 's|^;* *\(load printers = \).*|   \1no|' $file && \
-    sed -i 's|^;* *\(printcap name = \).*|   \1/dev/null|' $file && \
-    sed -i 's|^;* *\(printing = \).*|   \1bsd|' $file && \
-    sed -i 's|^;* *\(unix password sync = \).*|   \1no|' $file && \
-    sed -i 's|^;* *\(preserve case = \).*|   \1yes|' $file && \
-    sed -i 's|^;* *\(short preserve case = \).*|   \1yes|' $file && \
-    sed -i 's|^;* *\(default case = \).*|   \1lower|' $file && \
-    sed -i '/Share Definitions/,$d' $file && \
-    echo '   pam password change = yes' >>$file && \
-    echo '   map to guest = bad user' >>$file && \
-    echo '   usershare allow guests = yes' >>$file && \
-    echo '   create mask = 0664' >>$file && \
-    echo '   force create mode = 0664' >>$file && \
-    echo '   directory mask = 0775' >>$file && \
-    echo '   force directory mode = 0775' >>$file && \
-    echo '   force user = smbuser' >>$file && \
-    echo '   force group = users' >>$file && \
-    echo '   follow symlinks = yes' >>$file && \
-    echo '   load printers = no' >>$file && \
-    echo '   printing = bsd' >>$file && \
-    echo '   printcap name = /dev/null' >>$file && \
-    echo '   disable spoolss = yes' >>$file && \
-    echo '   socket options = TCP_NODELAY' >>$file && \
-    echo '   strict locking = no' >>$file && \
-    echo '   vfs objects = acl_xattr catia fruit recycle streams_xattr' \
-                >>$file && \
-    echo '   recycle:keeptree = yes' >>$file && \
-    echo '   recycle:versions = yes' >>$file && \
-    echo '' >>$file && \
-    echo '   # Security' >>$file && \
-    echo '   client ipc max protocol = default' >>$file && \
-    echo '   client max protocol = default' >>$file && \
-    echo '   server max protocol = SMB3' >>$file && \
-    echo '   client ipc min protocol = default' >>$file && \
-    echo '   client min protocol = CORE' >>$file && \
-    echo '   server min protocol = SMB2' >>$file && \
-    echo '' >>$file && \
-    echo '   # Time Machine' >>$file && \
-    echo '   durable handles = yes' >>$file && \
-    echo '   kernel oplocks = no' >>$file && \
-    echo '   kernel share modes = no' >>$file && \
-    echo '   posix locking = no' >>$file && \
-    echo '   fruit:aapl = yes' >>$file && \
-    echo '   fruit:advertise_fullsync = true' >>$file && \
-    echo '   fruit:time machine = yes' >>$file && \
-    echo '   smb2 leases = yes' >>$file && \
-    echo '' >>$file && \
-    rm -rf /tmp/*
+RUN set -x \
+    && apk --no-cache upgrade \
+    && apk --no-cache add \
+        bash \
+        samba \
+        shadow \
+        tini \
+    && adduser -D -G users -H -S -g 'Samba User' -h /tmp smbuser \
+    && sed -i \
+        -e 's|^;* *\(log file =\).*|   \1 /dev/stdout|' \
+        -e 's|^;* *\(load printers = \).*|   \1 no|' \
+        -e 's|^;* *\(printcap name = \).*|   \1 /dev/null|' \
+        -e 's|^;* *\(printing = \).*|   \1 bsd|' \
+        -e 's|^;* *\(unix password sync = \).*|   \1 no|' \
+        -e 's|^;* *\(preserve case = \).*|   \1 yes|' \
+        -e 's|^;* *\(short preserve case = \).*|   \1 yes|' \
+        -e 's|^;* *\(default case = \).*|   \1 lower|' \
+        -e '/Share Definitions/,$d' \
+        /etc/samba/smb.conf \
+    && { \
+        echo '   pam password change = yes'; \
+        echo '   map to guest = bad user'; \
+        echo '   usershare allow guests = yes'; \
+        echo '   create mask = 0664'; \
+        echo '   force create mode = 0664'; \
+        echo '   directory mask = 0775'; \
+        echo '   force directory mode = 0775'; \
+        echo '   force user = smbuser'; \
+        echo '   force group = users'; \
+        echo '   follow symlinks = yes'; \
+        echo '   load printers = no'; \
+        echo '   printing = bsd'; \
+        echo '   printcap name = /dev/null'; \
+        echo '   disable spoolss = yes'; \
+        echo '   socket options = TCP_NODELAY'; \
+        echo '   strict locking = no'; \
+        echo '   vfs objects = acl_xattr catia fruit recycle streams_xattr'; \
+        echo '   recycle:keeptree = yes'; \
+        echo '   recycle:versions = yes'; \
+        echo; \
+        echo '   # Security'; \
+        echo '   client ipc max protocol = default'; \
+        echo '   client max protocol = default'; \
+        echo '   server max protocol = SMB3'; \
+        echo '   client ipc min protocol = default'; \
+        echo '   client min protocol = CORE'; \
+        echo '   server min protocol = SMB2'; \
+        echo; \
+        echo '   # Time Machine'; \
+        echo '   durable handles = yes'; \
+        echo '   kernel oplocks = no'; \
+        echo '   kernel share modes = no'; \
+        echo '   posix locking = no'; \
+        echo '   fruit:aapl = yes'; \
+        echo '   fruit:advertise_fullsync = true'; \
+        echo '   fruit:time machine = yes'; \
+        echo '   smb2 leases = yes'; \
+        echo; \
+    } >> /etc/samba/smb.conf \
+    && rm -rf /tmp/*
 
 COPY samba.sh /usr/bin/
 
@@ -63,7 +70,7 @@ EXPOSE 137/udp 138/udp 139 445
 HEALTHCHECK --interval=60s --timeout=15s \
             CMD smbclient -L '\\localhost' -U '%' -m SMB3
 
-VOLUME ["/etc", "/var/cache/samba", "/var/lib/samba", "/var/log/samba",\
+VOLUME ["/etc", "/var/cache/samba", "/var/lib/samba", "/var/log/samba", \
             "/run/samba"]
 
 ENTRYPOINT ["/sbin/tini", "--", "/usr/bin/samba.sh"]
